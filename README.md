@@ -150,9 +150,9 @@ Map + Dashboard + Results
 
 ## Team
 
-**Team Name:** *Your Team Name*
+**Team Name:** *Hackers*
 
-**Hackathon:** *Hackathon Name 2026*
+**Hackathon:** *GDG VIT Chennai - Build with Gemma*
 
 ---
 

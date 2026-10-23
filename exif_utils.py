@@ -3,6 +3,11 @@ import piexif, random
 MOCK_LAT_RANGE = (12.90, 12.95)
 MOCK_LON_RANGE = (80.10, 80.20)
 
+def _reference_is(ref, direction):
+    if isinstance(ref, bytes):
+        ref = ref.decode('ascii', errors='ignore')
+    return isinstance(ref, str) and ref.upper() == direction
+
 def get_gps_or_mock(image_bytes: bytes) -> tuple:
     try:
         exif_dict = piexif.load(image_bytes)
@@ -10,6 +15,10 @@ def get_gps_or_mock(image_bytes: bytes) -> tuple:
         if gps:
             lat = _to_degrees(gps[piexif.GPSIFD.GPSLatitude])
             lon = _to_degrees(gps[piexif.GPSIFD.GPSLongitude])
+            if _reference_is(gps.get(piexif.GPSIFD.GPSLatitudeRef), 'S'):
+                lat = -lat
+            if _reference_is(gps.get(piexif.GPSIFD.GPSLongitudeRef), 'W'):
+                lon = -lon
             return lat, lon
     except Exception:
         pass

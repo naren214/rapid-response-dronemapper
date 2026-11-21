@@ -1,28 +1,29 @@
-import piexif, random
+from struct import error as StructError
 
-MOCK_LAT_RANGE = (12.90, 12.95)
-MOCK_LON_RANGE = (80.10, 80.20)
+import piexif
 
-def _reference_is(ref, direction):
+
+def _reference(ref):
     if isinstance(ref, bytes):
         ref = ref.decode('ascii', errors='ignore')
-    return isinstance(ref, str) and ref.upper() == direction
+    return ref.upper() if isinstance(ref, str) else None
 
-def get_gps_or_mock(image_bytes: bytes) -> tuple:
+
+def get_gps(image_bytes: bytes) -> tuple[float, float] | None:
     try:
-        exif_dict = piexif.load(image_bytes)
-        gps = exif_dict.get("GPS", {})
-        if gps:
-            lat = _to_degrees(gps[piexif.GPSIFD.GPSLatitude])
-            lon = _to_degrees(gps[piexif.GPSIFD.GPSLongitude])
-            if _reference_is(gps.get(piexif.GPSIFD.GPSLatitudeRef), 'S'):
-                lat = -lat
-            if _reference_is(gps.get(piexif.GPSIFD.GPSLongitudeRef), 'W'):
-                lon = -lon
-            return lat, lon
-    except Exception:
-        pass
-    return random.uniform(*MOCK_LAT_RANGE), random.uniform(*MOCK_LON_RANGE)
+        gps = piexif.load(image_bytes).get("GPS", {})
+        lat = _to_degrees(gps[piexif.GPSIFD.GPSLatitude])
+        lon = _to_degrees(gps[piexif.GPSIFD.GPSLongitude])
+        lat_ref = _reference(gps.get(piexif.GPSIFD.GPSLatitudeRef))
+        lon_ref = _reference(gps.get(piexif.GPSIFD.GPSLongitudeRef))
+    except (KeyError, ValueError, TypeError, OSError, IndexError, ZeroDivisionError, StructError):
+        return None
+
+    if lat_ref not in {"N", "S"} or lon_ref not in {"E", "W"}:
+        return None
+    if not (0 <= lat <= 90 and 0 <= lon <= 180):
+        return None
+    return (-lat if lat_ref == "S" else lat, -lon if lon_ref == "W" else lon)
 
 def _to_degrees(value):
     d, m, s = value

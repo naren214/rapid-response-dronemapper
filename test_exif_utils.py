@@ -4,7 +4,7 @@ import unittest
 import piexif
 from PIL import Image
 
-from exif_utils import get_gps_or_mock
+from exif_utils import get_gps
 
 
 def make_image(latitude_ref, longitude_ref):
@@ -23,14 +23,21 @@ class GpsReferenceTests(unittest.TestCase):
     def test_south_west_coordinates_are_negative_for_byte_and_string_refs(self):
         for south, west in ((b'S', b'W'), ('S', 'W')):
             with self.subTest(latitude_ref=south, longitude_ref=west):
-                latitude, longitude = get_gps_or_mock(make_image(south, west))
+                latitude, longitude = get_gps(make_image(south, west))
                 self.assertAlmostEqual(latitude, -33.5)
                 self.assertAlmostEqual(longitude, -70 - 40 / 60)
 
     def test_north_east_coordinates_remain_positive(self):
-        latitude, longitude = get_gps_or_mock(make_image(b'N', b'E'))
+        latitude, longitude = get_gps(make_image(b'N', b'E'))
         self.assertGreater(latitude, 0)
         self.assertGreater(longitude, 0)
+
+    def test_missing_or_unusable_gps_returns_no_coordinates(self):
+        image = io.BytesIO()
+        Image.new("RGB", (2, 2)).save(image, format="JPEG")
+        for data in (image.getvalue(), make_image(b'?', b'E'), b'invalid image'):
+            with self.subTest(data=data[:16]):
+                self.assertIsNone(get_gps(data))
 
 
 if __name__ == '__main__':

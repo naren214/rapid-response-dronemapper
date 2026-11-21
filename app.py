@@ -1,17 +1,17 @@
+from io import BytesIO
+
 import streamlit as st
 import zipfile
 import pandas as pd
+from PIL import Image
 from gemma_client import analyze_image_safe
-from exif_utils import get_gps_or_mock
+from exif_utils import get_gps
 
 st.set_page_config(
     page_title="Rapid Response Drone Mapper",
     page_icon="🚁",
     layout="wide"
 )
-
-def analyze_image_cached(filename: str, image_bytes: bytes) -> dict:
-    return analyze_image_safe(image_bytes)
 
 st.sidebar.title("🚁 Rapid Response Drone Mapper")
 st.sidebar.write("### Gemma 4 Powered")
@@ -58,8 +58,9 @@ if analyze and images:
     with st.spinner("Analyzing images with Gemma..."):
         results = []
         for name, data in images:
-            lat, lon = get_gps_or_mock(data)
-            ai_result = analyze_image_cached(name, data)
+            coordinates = get_gps(data)
+            lat, lon = coordinates if coordinates is not None else (None, None)
+            ai_result = analyze_image_safe(data)
             results.append({
                 "filename": name,
                 "lat": lat,
@@ -91,7 +92,11 @@ if analyze and images:
 
         st.divider()
         st.header("🗺 Disaster Map")
-        st.map(df[["lat", "lon"]])
+        mapped = df[["lat", "lon"]].dropna()
+        if not mapped.empty:
+            st.map(mapped)
+        if len(mapped) < len(df):
+            st.caption(f"The map excludes {len(df) - len(mapped)} of {len(df)} images because they lack usable GPS metadata.")
 
         st.divider()
         st.header("📋 Results")
@@ -110,6 +115,10 @@ if analyze and images:
         preview_cols = st.columns(3)
         for idx, (name, data) in enumerate(images):
             with preview_cols[idx % 3]:
-                st.image(data, caption=name, width="stretch")
+                try:
+                    with Image.open(BytesIO(data)) as image:
+                        st.image(image, caption=name, width="stretch")
+                except (OSError, ValueError, Image.DecompressionBombError):
+                    st.caption(f"Preview unavailable for {name}")
 elif analyze:
     st.warning("Please upload a ZIP file first.")

@@ -1,8 +1,6 @@
 # 🚁 Rapid Response Drone Mapper
 
-AI-powered disaster assessment platform that analyzes drone imagery and generates rapid situational awareness for emergency response teams.
-
-Built for **Hackathon** using **Streamlit + Google Gemma 4**.
+A Streamlit hackathon prototype that uses Google Gemma 4 to summarize visible hazards in drone imagery and organize the results for review. Severity scores are AI estimates that require human review.
 
 ---
 
@@ -18,9 +16,9 @@ Rapid Response Drone Mapper automates this process by analyzing aerial images us
 
 - 📂 Upload a ZIP containing drone images
 - 🤖 AI-powered image analysis using Gemma 4
-- 📊 Severity score (1–10) for every image
+- 📊 Severity estimate (1–10) for each successful analysis
 - 📝 Automatic hazard summary generation
-- 🗺 Interactive disaster map using GPS metadata
+- 🗺 Interactive map showing images with usable EXIF GPS metadata
 - 📈 Dashboard with disaster statistics
 - 🖼 Image preview gallery
 - ⚠ Graceful handling of invalid or failed image analyses
@@ -75,15 +73,14 @@ Rapid Response Drone Mapper automates this process by analyzing aerial images us
 Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/rapid-response-drone-mapper.git
-
-cd rapid-response-drone-mapper
+git clone https://github.com/naren214/rapid-response-dronemapper.git
+cd rapid-response-dronemapper
 ```
 
 Install dependencies:
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 Set your API key:
@@ -107,8 +104,10 @@ GEMINI_API_KEY="YOUR_API_KEY"
 ## Run the Project
 
 ```bash
-streamlit run app.py
+python -m streamlit run app.py
 ```
+
+Open the local URL printed by Streamlit. Images without usable GPS metadata still appear in the results and gallery when the image can be decoded.
 
 ---
 
